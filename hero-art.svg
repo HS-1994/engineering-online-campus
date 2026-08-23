@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Engineering adventure landscape</title>
+  <desc id="desc">Original stylized night landscape with mountains, a glowing orb, circuit paths and an engineering observatory silhouette.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#102a40"/><stop offset="0.52" stop-color="#0b1726"/><stop offset="1" stop-color="#070d17"/></linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%"><stop offset="0" stop-color="#bfefff" stop-opacity=".95"/><stop offset=".32" stop-color="#63d8ff" stop-opacity=".55"/><stop offset="1" stop-color="#63d8ff" stop-opacity="0"/></radialGradient>
+    <linearGradient id="mountain" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#213b53"/><stop offset="1" stop-color="#0b1420"/></linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f0d69a"/><stop offset="1" stop-color="#aa7b32"/></linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky)"/>
+  <circle cx="1190" cy="180" r="210" fill="url(#glow)"/>
+  <circle cx="1190" cy="180" r="74" fill="#d7f5ff" opacity=".92"/>
+  <circle cx="1180" cy="170" r="74" fill="#edfaff" opacity=".22"/>
+  <g fill="#fff" opacity=".55">
+    <circle cx="170" cy="120" r="2"/><circle cx="360" cy="205" r="2"/><circle cx="520" cy="92" r="2"/><circle cx="725" cy="150" r="1.6"/><circle cx="950" cy="90" r="2"/><circle cx="1410" cy="90" r="2"/><circle cx="1510" cy="240" r="1.5"/>
+  </g>
+  <path d="M0 700 L0 560 L240 430 L420 565 L625 350 L840 555 L1030 420 L1220 590 L1410 405 L1600 560 L1600 900 L0 900Z" fill="url(#mountain)"/>
+  <path d="M0 760 L220 605 L360 660 L530 520 L710 670 L875 570 L1030 700 L1190 580 L1340 680 L1510 535 L1600 600 L1600 900 L0 900Z" fill="#07111c" opacity=".9"/>
+  <g fill="none" stroke="#63d8ff" stroke-opacity=".32" stroke-width="3">
+    <path d="M150 740 H350 V680 H470 V620 H620"/>
+    <path d="M980 710 H1120 V655 H1270 V590 H1450"/>
+    <path d="M220 810 H510 V760 H700"/>
+  </g>
+  <g fill="#63d8ff" opacity=".62"><circle cx="350" cy="740" r="5"/><circle cx="470" cy="680" r="5"/><circle cx="620" cy="620" r="5"/><circle cx="1120" cy="710" r="5"/><circle cx="1270" cy="655" r="5"/><circle cx="1450" cy="590" r="5"/></g>
+  <g transform="translate(690 545)">
+    <path d="M0 260 L80 120 L160 260Z" fill="#0b1521" stroke="#63d8ff" stroke-opacity=".35"/>
+    <rect x="55" y="165" width="50" height="95" fill="#0b1521" stroke="#d7eef8" stroke-opacity=".32"/>
+    <circle cx="80" cy="130" r="36" fill="#0b1521" stroke="url(#gold)" stroke-width="4"/>
+    <path d="M80 94 V166 M44 130 H116" stroke="#63d8ff" stroke-opacity=".55" stroke-width="3"/>
+    <circle cx="80" cy="130" r="8" fill="#f0d69a"/>
+  </g>
+  <g fill="none" stroke="#f0d69a" stroke-opacity=".32" stroke-width="2">
+    <circle cx="1190" cy="180" r="120"/><circle cx="1190" cy="180" r="150"/>
+  </g>
+</svg>
