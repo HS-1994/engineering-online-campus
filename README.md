@@ -1,28 +1,25 @@
 # Engineering Online Campus
 
-A private, local-first personal engineering university built around a world-class multidisciplinary curriculum.
+A world-class personal online engineering university and campus.
 
-## What is inside
+## Architecture
 
-- Personal student login using a local Student Number + password
-- Campus dashboard, curriculum map, study schedule, assessment hub, labs/projects, library and academic record
-- 67 courses imported from the active Engineering Mastery Notion course library, plus an expanded university-level engineering spine
-- Mechanical, Civil/BIM, Electrical, Control/Instrumentation, Mechatronics, Robotics, Manufacturing, Simulation, Energy and Professional Engineering coverage
-- Course workspaces with progress, grades, notes and direct resource links
-- Semester planning and evidence-based learning: problem sets, labs, design reviews, verification and capstone work
-- Original high-detail engineering/adventure visual direction with a Japanese game-inspired atmosphere
-- No backend, no paid API and no database: student data stays in the browser
+The campus is local-first and designed for one student on one device. Progress, grades, notes and the local student profile are stored in the browser; there is no paid backend, paid API or required subscription to the campus itself.
 
-## Zero-cost architecture
+The academic model has three layers:
 
-GitHub stores the source. GitHub Pages is the intended free static host. The application uses browser storage only, so the personal login and study data stay on the device.
+1. **University Spine** — the non-negotiable engineering foundation: mathematics, science, programming, mechanics, materials, thermal/fluid science, circuits/electronics, controls, measurement/DAQ, mechatronics, embedded systems, robotics, systems engineering, manufacturing and professional engineering.
+2. **Personal Course Library** — the user's existing Coursera and Udemy library, plus software/lab resources.
+3. **Master Elective Catalog** — a broad subject bank for specialization across mechanical, electrical, electronics, power, control, robotics, computing, civil/structural, geotechnical, manufacturing, energy, aerospace, nuclear, environmental, systems and related areas.
 
-Expected Pages URL:
+## Source rule
 
-https://hs-1994.github.io/engineering-online-campus/
+Every active course exposes a study-access route. Existing library entries link to the stored Coursera/Udemy/source URL. Elective-bank subjects use the free NPTEL course ecosystem as the zero-cost route; where a title-specific open course has been verified, the catalog links directly to it. This keeps the campus from inventing courses without a way to study them.
 
-## Curriculum philosophy
+## Engineering practice model
 
-Foundation → computation → engineering breadth → design depth → measurement → systems integration → specialization → professional engineering → capstone/thesis.
+The curriculum is intentionally not lecture-only. Learning should produce calculations, code, simulation, CAD, experiments, measurement, design reviews, technical reports, verification evidence and a multidisciplinary capstone/thesis.
 
-The existing Engineering Mastery library is the resource layer; the campus spine adds the integration needed for a serious university-style engineering education.
+## Design
+
+Masculine engineering aesthetic with Japanese adventure-game inspiration, original vector artwork, responsive layouts and a personal-campus feel.
