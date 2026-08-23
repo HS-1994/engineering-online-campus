@@ -1,0 +1,1 @@
+The visual assets are stored as WebP files and used by the anime dashboard.
