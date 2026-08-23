@@ -1,19 +1,28 @@
 # Engineering Online Campus
 
-A world-class personal online engineering university and campus.
+A private, local-first personal engineering university built around a world-class multidisciplinary curriculum.
 
-## Vision
+## What is inside
 
-A multidisciplinary engineering curriculum designed around:
+- Personal student login using a local Student Number + password
+- Campus dashboard, curriculum map, study schedule, assessment hub, labs/projects, library and academic record
+- 67 courses imported from the active Engineering Mastery Notion course library, plus an expanded university-level engineering spine
+- Mechanical, Civil/BIM, Electrical, Control/Instrumentation, Mechatronics, Robotics, Manufacturing, Simulation, Energy and Professional Engineering coverage
+- Course workspaces with progress, grades, notes and direct resource links
+- Semester planning and evidence-based learning: problem sets, labs, design reviews, verification and capstone work
+- Original high-detail engineering/adventure visual direction with a Japanese game-inspired atmosphere
+- No backend, no paid API and no database: student data stays in the browser
 
-- Engineering mathematics, physics, chemistry, programming, and numerical methods
-- Mechanical engineering and advanced mechanical design
-- Electrical engineering, electronics, power, machines, and drives
-- Control, instrumentation, measurement, and data acquisition
-- Mechatronics, embedded systems, robotics, and ROS 2
-- Manufacturing, engineering systems, simulation, and digital twins
-- Civil engineering, structures, BIM, and MEP expansion
-- Professional engineering, economics, project management, ethics, and sustainability
-- Laboratory, design-build-test, research, and capstone experiences
+## Zero-cost architecture
 
-The curriculum is based on the existing Engineering Mastery library and is continuously audited against strong university curricula and professional engineering expectations.
+GitHub stores the source. GitHub Pages is the intended free static host. The application uses browser storage only, so the personal login and study data stay on the device.
+
+Expected Pages URL:
+
+https://hs-1994.github.io/engineering-online-campus/
+
+## Curriculum philosophy
+
+Foundation → computation → engineering breadth → design depth → measurement → systems integration → specialization → professional engineering → capstone/thesis.
+
+The existing Engineering Mastery library is the resource layer; the campus spine adds the integration needed for a serious university-style engineering education.
