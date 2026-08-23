@@ -1,35 +1,36 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
-  <title id="title">Engineering adventure landscape</title>
-  <desc id="desc">Original stylized night landscape with mountains, a glowing orb, circuit paths and an engineering observatory silhouette.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 760" role="img" aria-label="Original engineering adventure campus illustration">
   <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#102a40"/><stop offset="0.52" stop-color="#0b1726"/><stop offset="1" stop-color="#070d17"/></linearGradient>
-    <radialGradient id="glow" cx="50%" cy="50%"><stop offset="0" stop-color="#bfefff" stop-opacity=".95"/><stop offset=".32" stop-color="#63d8ff" stop-opacity=".55"/><stop offset="1" stop-color="#63d8ff" stop-opacity="0"/></radialGradient>
-    <linearGradient id="mountain" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#213b53"/><stop offset="1" stop-color="#0b1420"/></linearGradient>
-    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f0d69a"/><stop offset="1" stop-color="#aa7b32"/></linearGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0c2134"/><stop offset=".55" stop-color="#102c45"/><stop offset="1" stop-color="#172039"/></linearGradient>
+    <linearGradient id="sun" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f4d88a"/><stop offset="1" stop-color="#a7d8ef"/></linearGradient>
+    <linearGradient id="mount" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#1a3d55"/><stop offset="1" stop-color="#0a1725"/></linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#8ddcff"/><stop offset="1" stop-color="#7085d8"/></linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="18"/></filter>
   </defs>
-  <rect width="1600" height="900" fill="url(#sky)"/>
-  <circle cx="1190" cy="180" r="210" fill="url(#glow)"/>
-  <circle cx="1190" cy="180" r="74" fill="#d7f5ff" opacity=".92"/>
-  <circle cx="1180" cy="170" r="74" fill="#edfaff" opacity=".22"/>
-  <g fill="#fff" opacity=".55">
-    <circle cx="170" cy="120" r="2"/><circle cx="360" cy="205" r="2"/><circle cx="520" cy="92" r="2"/><circle cx="725" cy="150" r="1.6"/><circle cx="950" cy="90" r="2"/><circle cx="1410" cy="90" r="2"/><circle cx="1510" cy="240" r="1.5"/>
+  <rect width="1600" height="760" fill="url(#sky)"/>
+  <circle cx="1170" cy="145" r="110" fill="url(#sun)" opacity=".9"/>
+  <circle cx="1170" cy="145" r="180" fill="#8edcff" opacity=".16" filter="url(#glow)"/>
+  <g fill="#ffffff" opacity=".65">
+    <circle cx="180" cy="150" r="2"/><circle cx="320" cy="90" r="2"/><circle cx="540" cy="160" r="1.6"/><circle cx="720" cy="70" r="2"/><circle cx="940" cy="210" r="1.7"/><circle cx="1330" cy="92" r="1.8"/><circle cx="1450" cy="220" r="1.5"/>
   </g>
-  <path d="M0 700 L0 560 L240 430 L420 565 L625 350 L840 555 L1030 420 L1220 590 L1410 405 L1600 560 L1600 900 L0 900Z" fill="url(#mountain)"/>
-  <path d="M0 760 L220 605 L360 660 L530 520 L710 670 L875 570 L1030 700 L1190 580 L1340 680 L1510 535 L1600 600 L1600 900 L0 900Z" fill="#07111c" opacity=".9"/>
-  <g fill="none" stroke="#63d8ff" stroke-opacity=".32" stroke-width="3">
-    <path d="M150 740 H350 V680 H470 V620 H620"/>
-    <path d="M980 710 H1120 V655 H1270 V590 H1450"/>
-    <path d="M220 810 H510 V760 H700"/>
+  <path d="M0 430 L190 280 L310 360 L470 210 L635 410 L805 245 L1010 420 L1175 265 L1360 410 L1510 305 L1600 370 V760 H0Z" fill="url(#mount)"/>
+  <path d="M0 520 L230 420 L380 500 L565 355 L760 520 L940 390 L1130 520 L1280 430 L1460 520 L1600 450 V760 H0Z" fill="#08131f" opacity=".92"/>
+  <g transform="translate(740 300)">
+    <path d="M0 300 V150 L120 70 L240 150 V300Z" fill="#0b1927" stroke="#7edbff" stroke-width="4" opacity=".96"/>
+    <path d="M70 300 V180 H170 V300" fill="#111f2d" stroke="#d9b66f" stroke-width="4"/>
+    <path d="M120 70 L120 20 L165 55 L120 92 L75 55Z" fill="#152d42" stroke="#8ddcff" stroke-width="4"/>
+    <path d="M25 170 L120 115 L215 170" fill="none" stroke="#7c97d9" stroke-width="4"/>
+    <circle cx="120" cy="170" r="18" fill="#8ddcff" opacity=".35"/>
+    <path d="M260 305 L320 210 L380 305Z" fill="#0c1a28" stroke="#7edbff" stroke-width="4"/>
+    <path d="M292 305 V255 M348 305 V255 M320 210 V265" stroke="#d9b66f" stroke-width="4"/>
   </g>
-  <g fill="#63d8ff" opacity=".62"><circle cx="350" cy="740" r="5"/><circle cx="470" cy="680" r="5"/><circle cx="620" cy="620" r="5"/><circle cx="1120" cy="710" r="5"/><circle cx="1270" cy="655" r="5"/><circle cx="1450" cy="590" r="5"/></g>
-  <g transform="translate(690 545)">
-    <path d="M0 260 L80 120 L160 260Z" fill="#0b1521" stroke="#63d8ff" stroke-opacity=".35"/>
-    <rect x="55" y="165" width="50" height="95" fill="#0b1521" stroke="#d7eef8" stroke-opacity=".32"/>
-    <circle cx="80" cy="130" r="36" fill="#0b1521" stroke="url(#gold)" stroke-width="4"/>
-    <path d="M80 94 V166 M44 130 H116" stroke="#63d8ff" stroke-opacity=".55" stroke-width="3"/>
-    <circle cx="80" cy="130" r="8" fill="#f0d69a"/>
+  <g transform="translate(1280 380)" opacity=".9">
+    <circle cx="0" cy="0" r="68" fill="#0a1826" stroke="url(#metal)" stroke-width="7"/>
+    <circle cx="0" cy="0" r="19" fill="#d9b66f"/>
+    <g stroke="#85d9ff" stroke-width="6">
+      <path d="M0-67V-24 M0 24V67 M-67 0H-24 M24 0H67"/>
+      <path d="M-47-47L-17-17 M17 17L47 47 M47-47L17-17 M-17 17L-47 47"/>
+    </g>
   </g>
-  <g fill="none" stroke="#f0d69a" stroke-opacity=".32" stroke-width="2">
-    <circle cx="1190" cy="180" r="120"/><circle cx="1190" cy="180" r="150"/>
-  </g>
+  <path d="M0 660 C300 610 440 710 760 650 C1040 600 1260 690 1600 625 V760 H0Z" fill="#06101a"/>
+  <path d="M0 704 C300 652 440 750 760 695 C1040 650 1260 735 1600 670" fill="none" stroke="#d9b66f" stroke-opacity=".35" stroke-width="3"/>
 </svg>
