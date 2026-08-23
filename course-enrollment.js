@@ -1,130 +1,181 @@
-// Engineering Online Campus — enrollment, registration, prerequisite gates.
-// Local-first. No server, no recursive DOM observer, no shortcut completion for locked courses.
+// Engineering Online Campus — Enrollment Center
+// Full material catalog + 8-semester structure + prerequisite gates.
+// Local-first. No completion shortcuts and no DOM mutation observer.
 (function(){
   'use strict';
-  const ENROLLED_KEY='campus-enrolled-courses';
-  const STARTED_KEY='campus-started-courses';
+  const ENROLLED='campus-enrolled-courses';
+  const STARTED='campus-started-courses';
+  let activeTab='plan';
+  let query='';
+  let track='All';
+  let kind='All';
 
-  const load=(key, fallback=[])=>{try{const v=JSON.parse(localStorage.getItem(key)||'null');return Array.isArray(v)?v:fallback}catch{return fallback}};
-  const save=(key,v)=>localStorage.setItem(key,JSON.stringify(v));
-  const setOf=key=>new Set(load(key).map(String));
-  const esc=v=>String(v??'').replace(/[&<>\\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\\':'&#92;','"':'&quot;'}[c]));
-  const progress=id=>Math.max(Number(localStorage.getItem(`progress-${id}`)||0),Number(localStorage.getItem(`catalog-progress-${id}`)||0),Number(localStorage.getItem(`academic-progress-${id}`)||0));
+  const load=(k,d=[])=>{try{const v=JSON.parse(localStorage.getItem(k)||'null');return Array.isArray(v)?v:d}catch{return d}};
+  const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+  const set=k=>new Set(load(k).map(String));
+  const esc=v=>String(v??'').replace(/[&<>\\\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\\':'&#92;','\"':'&quot;'}[c]));
+  const progress=id=>Math.max(0,Number(localStorage.getItem(`progress-${id}`)||0),Number(localStorage.getItem(`catalog-progress-${id}`)||0),Number(localStorage.getItem(`academic-progress-${id}`)||0));
   const complete=id=>progress(id)>=100;
 
-  function courses(){
-    const out=[];const seen=new Set();
-    const add=(c,id)=>{if(!c)return;const cid=String(c.id||c.courseId||id||'');if(!cid||seen.has(cid))return;seen.add(cid);out.push({...c,id:cid,courseId:String(c.courseId||cid)});};
-    (window.COURSE_LIBRARY||[]).forEach(c=>add(c));
-    (window.ELECTIVE_CATALOG||[]).forEach(c=>add(c));
+  function allCourses(){
+    const map=new Map();
+    const put=(raw,idOverride,category)=>{
+      if(!raw)return;
+      const id=String(raw.id||raw.courseId||idOverride||raw.title||'');
+      if(!id)return;
+      const prev=map.get(id)||{};
+      map.set(id,{...prev,...raw,id,courseId:String(raw.courseId||prev.courseId||id),catalogCategory:category||prev.catalogCategory||'Elective'});
+    };
+    (window.COURSE_LIBRARY||[]).forEach(c=>put(c,null,'My Library / Courses'));
+    (window.ELECTIVE_CATALOG||[]).forEach(c=>put(c,null,'Elective Catalog'));
     const A=window.CAMPUS_ACADEMIC||{};
-    Object.entries(A.core||{}).forEach(([id,c])=>add(c,id));
-    (A.civilExpansion||[]).forEach(c=>add(c));
-    (A.electives||[]).forEach(c=>add(c));
-    return out;
+    Object.entries(A.core||{}).forEach(([id,c])=>put(c,id,'University Core'));
+    (A.civilExpansion||[]).forEach(c=>put(c,null,'Civil Expansion'));
+    (A.electives||[]).forEach(c=>put(c,null,'Academic Electives'));
+    return [...map.values()];
   }
-  function find(id){return courses().find(c=>String(c.id||c.courseId)===String(id))||null}
-  function prereqs(c){return Array.isArray(c?.prereq)?c.prereq.map(String):[]}
-  function missing(c){return prereqs(c).filter(id=>!complete(id))}
-  function title(id){return find(id)?.title||id}
+  function byId(id){return allCourses().find(c=>String(c.id)===String(id))||null;}
+  function prereqs(c){return Array.isArray(c?.prereq)?c.prereq.map(String):[];}
+  function missing(c){return prereqs(c).filter(id=>!complete(id));}
+  function title(id){return byId(id)?.title||id;}
+  function enrolled(id){return set(ENROLLED).has(String(id));}
+  function started(id){return set(STARTED).has(String(id));}
+  function notify(msg){window.toast?.(msg);}
 
-  function toast(msg){window.toast?.(msg)}
   function enroll(id){
-    const c=find(id);if(!c)return {ok:false,missing:[]};
-    const m=missing(c);if(m.length){toast('Enrollment locked: complete the prerequisites first.');return {ok:false,missing:m};}
-    const a=setOf(ENROLLED_KEY);a.add(String(id));save(ENROLLED_KEY,[...a]);window.dispatchEvent(new CustomEvent('enrollment-changed',{detail:{id:String(id)}}));return {ok:true};
+    const c=byId(id); if(!c)return {ok:false,missing:[]};
+    const m=missing(c);
+    if(m.length){notify('Enrollment locked — complete the listed prerequisites first.');return {ok:false,missing:m};}
+    const s=set(ENROLLED); s.add(String(id)); save(ENROLLED,[...s]);
+    window.dispatchEvent(new CustomEvent('enrollment-changed',{detail:{id:String(id)}}));
+    return {ok:true};
   }
   function start(id){
-    const r=enroll(id);if(!r.ok)return r;
-    const a=setOf(STARTED_KEY);a.add(String(id));save(STARTED_KEY,[...a]);localStorage.setItem(`status-${id}`,'Started');localStorage.setItem(`started-at-${id}`,new Date().toISOString());window.dispatchEvent(new CustomEvent('course-started',{detail:{id:String(id)}}));toast('Course started');return {ok:true};
+    const r=enroll(id); if(!r.ok)return r;
+    const s=set(STARTED); s.add(String(id)); save(STARTED,[...s]);
+    localStorage.setItem(`status-${id}`,'Started');
+    localStorage.setItem(`started-at-${id}`,new Date().toISOString());
+    window.dispatchEvent(new CustomEvent('course-started',{detail:{id:String(id)}}));
+    notify('Course started');
+    return {ok:true};
   }
-  function isEnrolled(id){return setOf(ENROLLED_KEY).has(String(id))}
-  function isStarted(id){return setOf(STARTED_KEY).has(String(id))}
 
   function css(){
-    if(document.getElementById('enrollment-css'))return;
-    const s=document.createElement('style');s.id='enrollment-css';s.textContent=`
-      .enrollment-tab-badge{margin-left:auto;font-size:.62rem;padding:4px 7px;border-radius:999px;background:rgba(99,216,255,.1);color:#91e2ff;border:1px solid rgba(99,216,255,.18)}
-      .enrollment-modal{position:fixed;inset:0;z-index:300;background:rgba(2,7,12,.92);backdrop-filter:blur(16px);padding:18px;overflow:auto}.enrollment-panel{max-width:1400px;margin:0 auto;background:linear-gradient(180deg,#122235,#08131f);border:1px solid rgba(196,220,240,.15);border-radius:24px;padding:28px;min-height:calc(100vh - 36px)}
-      .enrollment-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;border-bottom:1px solid rgba(196,220,240,.10);padding-bottom:18px}.enrollment-close{width:42px;height:42px;border-radius:50%;border:1px solid rgba(196,220,240,.15);background:rgba(255,255,255,.03);color:#eff5fb;font-size:1.4rem;cursor:pointer}
-      .enrollment-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:18px 0}.enrollment-metric{padding:14px;border:1px solid rgba(196,220,240,.10);border-radius:14px;background:rgba(255,255,255,.025)}.enrollment-metric .n{font-size:1.5rem;font-weight:900}.enrollment-metric .l{font-size:.7rem;color:#8ea1b4;text-transform:uppercase;letter-spacing:.08em}
-      .semester-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.semester-card{border:1px solid rgba(196,220,240,.12);border-radius:16px;background:rgba(255,255,255,.025);overflow:hidden}.semester-head{padding:14px;border-bottom:1px solid rgba(196,220,240,.08)}.semester-course{padding:13px 14px;border-bottom:1px solid rgba(196,220,240,.06)}.semester-course:last-child{border-bottom:0}.semester-course h4{margin:0 0 5px;font-size:.94rem}.course-tags{display:flex;gap:6px;flex-wrap:wrap}.course-tags span{font-size:.62rem;color:#9fb1c3;border:1px solid rgba(196,220,240,.1);padding:4px 7px;border-radius:999px}.course-status{margin-top:8px;font-size:.7rem}.status-complete{color:#72e4bc}.status-started{color:#63d8ff}.status-enrolled{color:#91e2ff}.status-ready{color:#b6c5d2}.status-locked{color:#ead9aa}
-      .prereq-box{margin-top:8px;padding:9px 10px;border-radius:10px;border:1px solid rgba(225,190,112,.18);background:rgba(225,190,112,.06);color:#ead9aa;font-size:.7rem;line-height:1.5}.prereq-list{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}.prereq-chip{border:1px solid rgba(225,190,112,.2);background:rgba(225,190,112,.06);color:#ead9aa;border-radius:999px;padding:4px 7px;font-size:.62rem;cursor:pointer}.enroll-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.enroll-btn{border:1px solid rgba(196,220,240,.14);background:rgba(255,255,255,.03);color:#eff5fb;border-radius:10px;padding:8px 10px;font-size:.72rem;font-weight:800;cursor:pointer}.enroll-btn.primary{background:linear-gradient(135deg,#63d8ff,#8f9bff);border:0;color:#07111b}.enroll-btn.start{background:linear-gradient(135deg,#72e4bc,#63d8ff);border:0;color:#07111b}.enroll-btn.done{color:#72e4bc;border-color:rgba(114,228,188,.25);background:rgba(114,228,188,.07);cursor:default}.enroll-btn.locked{opacity:.7;cursor:not-allowed}
-      .course-enrollment-panel{margin:16px 0;padding:16px;border:1px solid rgba(99,216,255,.18);border-radius:14px;background:linear-gradient(135deg,rgba(99,216,255,.06),rgba(143,155,255,.04));display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap}.course-enrollment-panel .sub{color:#91a4b7;font-size:.76rem;margin-top:4px}.course-lock{margin-top:8px}.course-lock strong{color:#ead9aa}
-      .inline-enroll{margin-left:6px}.inline-enroll.locked{color:#ead9aa;border-color:rgba(225,190,112,.18)}
-      @media(max-width:1100px){.semester-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.enrollment-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.semester-grid,.enrollment-summary{grid-template-columns:1fr}.enrollment-panel{padding:18px}.enrollment-modal{padding:8px}.course-enrollment-panel{align-items:flex-start;flex-direction:column}.enroll-btn{width:100%}}
-    `;document.head.appendChild(s);
+    if(document.getElementById('enrollment-center-css'))return;
+    const s=document.createElement('style'); s.id='enrollment-center-css';
+    s.textContent=`
+      .enrollment-tab-badge{margin-left:auto;font-size:.6rem;padding:3px 7px;border-radius:999px;background:rgba(99,216,255,.1);color:#91e2ff;border:1px solid rgba(99,216,255,.18)}
+      .enrollment-modal{position:fixed;inset:0;z-index:500;background:rgba(2,7,12,.94);backdrop-filter:blur(18px);padding:14px;overflow:auto}
+      .enrollment-panel{width:min(1500px,100%);min-height:calc(100vh - 28px);margin:0 auto;border:1px solid rgba(196,220,240,.14);border-radius:22px;background:linear-gradient(180deg,#102033,#07121e);box-shadow:0 35px 120px rgba(0,0,0,.55);overflow:hidden}
+      .enrollment-header{padding:26px 28px 20px;border-bottom:1px solid rgba(196,220,240,.1);display:flex;justify-content:space-between;gap:20px;align-items:flex-start}
+      .enrollment-header h2{font-size:clamp(1.8rem,3vw,2.8rem);margin:5px 0 6px;letter-spacing:-.03em}
+      .enrollment-close{width:42px;height:42px;border-radius:50%;border:1px solid rgba(196,220,240,.14);background:rgba(255,255,255,.03);color:#fff;font-size:1.35rem;cursor:pointer;flex:0 0 auto}
+      .enrollment-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:12px 28px;border-bottom:1px solid rgba(196,220,240,.08);background:rgba(255,255,255,.015);position:sticky;top:0;z-index:5}
+      .enrollment-tab{border:1px solid rgba(196,220,240,.12);background:rgba(255,255,255,.025);color:#c8d4df;padding:9px 12px;border-radius:10px;cursor:pointer;font-weight:800;font-size:.78rem}.enrollment-tab.active{background:rgba(99,216,255,.12);border-color:rgba(99,216,255,.3);color:#63d8ff}
+      .enrollment-content{padding:22px 28px 34px}
+      .enrollment-summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:18px}.enrollment-metric{border:1px solid rgba(196,220,240,.1);background:rgba(255,255,255,.02);border-radius:14px;padding:13px}.enrollment-metric .n{font-size:1.45rem;font-weight:900}.enrollment-metric .l{margin-top:3px;font-size:.63rem;text-transform:uppercase;letter-spacing:.08em;color:#8ea1b4}
+      .semester-list{display:grid;gap:14px}.semester-block{border:1px solid rgba(196,220,240,.11);border-radius:16px;overflow:hidden;background:rgba(255,255,255,.018)}
+      .semester-head{padding:15px 17px;border-bottom:1px solid rgba(196,220,240,.08);display:flex;justify-content:space-between;gap:15px;align-items:flex-start;background:linear-gradient(90deg,rgba(99,216,255,.05),rgba(143,155,255,.025))}.semester-head h3{margin:0;font-size:1rem}.semester-head .theme{color:#8ea1b4;font-size:.73rem;margin-top:4px}
+      .course-row{padding:14px 17px;border-bottom:1px solid rgba(196,220,240,.06);display:grid;grid-template-columns:minmax(0,2fr) minmax(150px,.8fr) minmax(190px,1fr);gap:14px;align-items:center}.course-row:last-child{border-bottom:0}.course-row h4{margin:0;font-size:.91rem}.course-row .meta{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.course-row .tag{padding:4px 7px;border:1px solid rgba(196,220,240,.1);border-radius:999px;color:#9fb1c3;font-size:.62rem}.course-row .status{font-size:.7rem}.ready{color:#b9c7d4}.locked{color:#ead9aa}.enrolled-state{color:#91e2ff}.started-state{color:#63d8ff}.completed-state{color:#72e4bc}
+      .course-actions{display:flex;gap:7px;justify-content:flex-end;flex-wrap:wrap}.enroll-btn{padding:9px 11px;border-radius:10px;border:1px solid rgba(196,220,240,.14);background:rgba(255,255,255,.025);color:#eff5fb;font-size:.7rem;font-weight:850;cursor:pointer}.enroll-btn.primary{background:linear-gradient(135deg,#63d8ff,#8f9bff);border:0;color:#07111b}.enroll-btn.start{background:linear-gradient(135deg,#72e4bc,#63d8ff);border:0;color:#07111b}.enroll-btn.done{color:#72e4bc;background:rgba(114,228,188,.07);border-color:rgba(114,228,188,.24);cursor:default}.enroll-btn.locked{color:#ead9aa;border-color:rgba(225,190,112,.22);background:rgba(225,190,112,.05);cursor:not-allowed}
+      .prereq-box{margin-top:9px;padding:9px 10px;border-radius:10px;border:1px solid rgba(225,190,112,.18);background:rgba(225,190,112,.055);color:#ead9aa;font-size:.69rem;line-height:1.5}.prereq-list{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.prereq-chip{border:1px solid rgba(225,190,112,.22);background:rgba(225,190,112,.08);color:#ead9aa;border-radius:999px;padding:5px 8px;font-size:.62rem;cursor:pointer}
+      .library-tools{display:grid;grid-template-columns:1.5fr .7fr .7fr;gap:9px;margin-bottom:14px}.library-tools input,.library-tools select{width:100%;background:#06111b;color:#eff5fb;border:1px solid rgba(196,220,240,.13);border-radius:11px;padding:10px 12px}.material-list{display:grid;gap:8px}.material-item{display:grid;grid-template-columns:minmax(0,2fr) 1fr auto;gap:12px;align-items:center;border:1px solid rgba(196,220,240,.1);border-radius:13px;background:rgba(255,255,255,.018);padding:12px 14px}.material-item h4{margin:0;font-size:.84rem}.material-meta{color:#879bae;font-size:.66rem;margin-top:4px}.material-actions{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}.material-pill{display:inline-flex;padding:4px 7px;border-radius:999px;border:1px solid rgba(196,220,240,.1);color:#9fb1c3;font-size:.6rem}
+      .my-enrolled{display:grid;gap:8px}.empty-enrollment{padding:30px;border:1px dashed rgba(196,220,240,.13);border-radius:14px;color:#9fb1c3;text-align:center}
+      .gate-note{padding:12px 14px;border-radius:12px;border:1px solid rgba(99,216,255,.14);background:rgba(99,216,255,.04);color:#b8c8d6;font-size:.72rem;line-height:1.55;margin-bottom:14px}.gate-note strong{color:#63d8ff}
+      @media(max-width:1050px){.enrollment-summary{grid-template-columns:repeat(3,minmax(0,1fr))}.course-row{grid-template-columns:1fr 1fr}.course-actions{justify-content:flex-start}.material-item{grid-template-columns:1fr auto}}
+      @media(max-width:700px){.enrollment-modal{padding:6px}.enrollment-panel{border-radius:16px}.enrollment-header,.enrollment-content{padding-left:16px;padding-right:16px}.enrollment-tabs{padding-left:16px;padding-right:16px}.enrollment-summary{grid-template-columns:1fr 1fr}.course-row{grid-template-columns:1fr}.library-tools{grid-template-columns:1fr}.material-item{grid-template-columns:1fr}.material-actions{justify-content:flex-start}.enroll-btn{width:100%}}
+    `;
+    document.head.appendChild(s);
   }
 
-  function semesterIndexFor(id){
-    const plan=(window.CAMPUS_ACADEMIC||{}).semesterPlan||[];const i=plan.findIndex(s=>(s.required||[]).map(String).includes(String(id))||(s.recommended||[]).map(String).includes(String(id)));return i<0?null:i+1;
+  function statusFor(c,e,s){
+    const id=String(c.id); if(complete(id))return ['completed-state','✓ Completed'];
+    if(s.has(id))return ['started-state','▶ Started'];
+    if(e.has(id))return ['enrolled-state','● Enrolled'];
+    const m=missing(c); if(m.length)return ['locked','🔒 Locked by prerequisites'];
+    return ['ready','Ready to enroll'];
+  }
+  function prereqMarkup(c){
+    const m=missing(c); if(!m.length)return '';
+    return `<div class="prereq-box"><strong>Complete first:</strong><div class="prereq-list">${m.map(id=>`<button type="button" class="prereq-chip" data-open-prereq="${esc(id)}">${esc(title(id))}</button>`).join('')}</div></div>`;
+  }
+  function actionMarkup(c,e,s){
+    const id=String(c.id),m=missing(c);
+    if(complete(id))return '<span class="enroll-btn done">✓ Completed</span>';
+    if(s.has(id))return '<span class="enroll-btn done">✓ Started</span>';
+    if(e.has(id))return `<button type="button" class="enroll-btn start" data-start="${esc(id)}">▶ Start Course</button>`;
+    if(m.length)return '<span class="enroll-btn locked">Prerequisites required</span>';
+    return `<button type="button" class="enroll-btn primary" data-enroll="${esc(id)}">＋ Add Course</button>`;
   }
 
-  function openEnrollment(){
-    css();document.getElementById('enrollment-modal')?.remove();
-    const A=window.CAMPUS_ACADEMIC||{};const plan=A.semesterPlan||[];const all=courses();const map=new Map(all.map(c=>[String(c.id),c]));
-    const e=setOf(ENROLLED_KEY),s=setOf(STARTED_KEY);
-    const requiredCount=plan.reduce((n,x)=>n+(x.required||[]).length,0),completedCount=[...e].filter(id=>complete(id)).length;
-    const modal=document.createElement('div');modal.className='enrollment-modal';modal.id='enrollment-modal';
-    modal.innerHTML=`<div class="enrollment-panel"><div class="enrollment-head"><div><div class="eyebrow">DEGREE REGISTRATION · STRUCTURED PREREQUISITES</div><h2 style="margin:.25rem 0 .45rem;font-size:2.3rem">Course Enrollment</h2><div class="muted-small">This is your registration gate. A course stays locked until every prerequisite is genuinely completed. There is no shortcut <em>Mark as completed</em> option for a locked course.</div></div><button class="enrollment-close" id="enrollment-close">×</button></div><div class="enrollment-summary"><div class="enrollment-metric"><div class="n">${requiredCount}</div><div class="l">Core / planned courses</div></div><div class="enrollment-metric"><div class="n">${e.size}</div><div class="l">Enrolled</div></div><div class="enrollment-metric"><div class="n">${s.size}</div><div class="l">Started</div></div><div class="enrollment-metric"><div class="n">${[...e].filter(id=>complete(id)).length}</div><div class="l">Completed</div></div></div><div class="semester-grid">${plan.map((sem,idx)=>renderSemester(sem,idx,map,e,s)).join('')}</div><div class="prereq-box" style="margin-top:16px"><strong>How the gate works:</strong> foundation courses unlock later courses. For example, a course requiring <strong>MTH101 + PHY101</strong> cannot be enrolled until both show <strong>100% complete</strong> in your academic record. You must actually study the prerequisite; the enrollment page will never tell you to fake completion.</div></div>`;
-    document.body.appendChild(modal);
-    modal.querySelector('#enrollment-close').addEventListener('click',()=>modal.remove());
-    modal.addEventListener('click',ev=>{const b=ev.target.closest('[data-enroll-id]');if(b){const r=enroll(b.dataset.enrollId);if(r.ok){toast('Course enrolled');openEnrollment();}return;}const st=ev.target.closest('[data-start-id]');if(st){const r=start(st.dataset.startId);if(r.ok){openEnrollment();}return;}const p=ev.target.closest('[data-prereq-id]');if(p){modal.remove();openCourse(p.dataset.prereqId);}});
-  }
-
-  function renderSemester(sem,idx,map,e,s){
+  function semesterBlock(sem,i,map,e,s){
     const ids=[...(sem.required||[]),...(sem.recommended||[])].map(String);
-    return `<section class="semester-card"><div class="semester-head"><div class="eyebrow">SEMESTER ${idx+1}</div><strong>${esc(sem.name)}</strong><div class="muted-small" style="margin-top:5px">${esc(sem.theme||'')}</div></div>${ids.map(id=>{
-      const c=map.get(id)||{id,courseId:id,title:id,role:(sem.required||[]).map(String).includes(id)?'Required':'Recommended'};const m=missing(c);const done=complete(id);const en=e.has(id);const st=s.has(id);
-      let status=done?'<span class="status-complete">✓ Completed</span>':st?'<span class="status-started">▶ Started</span>':en?'<span class="status-enrolled">● Enrolled</span>':m.length?'<span class="status-locked">🔒 Locked by prerequisites</span>':'<span class="status-ready">Ready to enroll</span>';
-      const prereq=m.length?`<div class="prereq-box"><strong>Complete first:</strong><div class="prereq-list">${m.map(pid=>`<button type="button" class="prereq-chip" data-prereq-id="${esc(pid)}">${esc(title(pid))}</button>`).join('')}</div></div>`:'';
-      let actions='';
-      if(done)actions='<span class="enroll-btn done">✓ Completed</span>';
-      else if(st)actions='<span class="enroll-btn done">✓ Started</span>';
-      else if(en)actions=`<button type="button" class="enroll-btn start" data-start-id="${esc(id)}">▶ Start Course</button>`;
-      else if(!m.length)actions=`<button type="button" class="enroll-btn primary" data-enroll-id="${esc(id)}">＋ Add Course</button>`;
-      else actions='<span class="enroll-btn locked">Prerequisites required</span>';
-      return `<article class="semester-course"><h4>${esc(c.title)}</h4><div class="course-tags"><span>${esc(c.id||id)}</span><span>${(sem.required||[]).map(String).includes(id)?'Required':'Recommended'}</span>${c.credits?`<span>${esc(c.credits)} credits</span>`:''}</div><div class="course-status">${status}</div>${prereq}<div class="enroll-actions">${actions}</div></article>`;
-    }).join('')}</section>`;
+    return `<section class="semester-block"><div class="semester-head"><div><div class="eyebrow">SEMESTER ${i+1}</div><h3>${esc(sem.name)}</h3><div class="theme">${esc(sem.theme||'')}</div></div><span class="material-pill">${ids.length} planned</span></div>${ids.map(id=>{const c=map.get(id)||{id,title:id,courseId:id};const [cls,label]=statusFor(c,e,s);return `<article class="course-row"><div><h4>${esc(c.title||id)}</h4><div class="meta"><span class="tag">${esc(c.courseId||id)}</span><span class="tag">${(sem.required||[]).map(String).includes(id)?'Required':'Recommended'}</span>${c.credits?`<span class="tag">${esc(c.credits)} credits</span>`:''}</div>${cls==='locked'?prereqMarkup(c):''}</div><div class="status ${cls}">${label}</div><div class="course-actions">${actionMarkup(c,e,s)}</div></article>`}).join('')}</section>`;
   }
 
-  function openCourse(id){
-    // Reuse the existing Full Catalog detail view when available, without recursively rendering the campus.
-    document.getElementById('enrollment-modal')?.remove();
-    const nav=document.querySelector('[data-full-catalog]');
-    if(nav){nav.click();setTimeout(()=>{const b=document.querySelector(`[data-detail="${CSS.escape(String(id))}"]`);if(b)b.click();},60);}else toast('Open Full Catalog to view this prerequisite.');
+  function renderPlan(root){
+    const A=window.CAMPUS_ACADEMIC||{};const plan=A.semesterPlan||[];const all=allCourses();const map=new Map(all.map(c=>[String(c.id),c]));const e=set(ENROLLED),s=set(STARTED);
+    const planned=new Set(plan.flatMap(x=>[...(x.required||[]),...(x.recommended||[])].map(String)));
+    const locked=[...planned].filter(id=>{const c=map.get(id);return c&&missing(c).length}).length;
+    root.innerHTML=`<div class="gate-note"><strong>Structured degree registration:</strong> the eight-semester plan is the spine. You can only enroll in a course when every defined prerequisite is genuinely at 100%. Locked courses never expose a "Mark as completed" shortcut.</div><div class="enrollment-summary"><div class="enrollment-metric"><div class="n">${planned.size}</div><div class="l">Planned in degree map</div></div><div class="enrollment-metric"><div class="n">${e.size}</div><div class="l">Enrolled</div></div><div class="enrollment-metric"><div class="n">${s.size}</div><div class="l">Started</div></div><div class="enrollment-metric"><div class="n">${all.filter(c=>complete(c.id)).length}</div><div class="l">Completed</div></div><div class="enrollment-metric"><div class="n">${locked}</div><div class="l">Locked now</div></div></div><div class="semester-list">${plan.map((sem,i)=>semesterBlock(sem,i,map,e,s)).join('')}</div>`;
   }
 
-  function injectTab(){
-    const nav=document.querySelector('.sidebar .nav');if(!nav||nav.querySelector('[data-course-enrollment]'))return;
-    const b=document.createElement('button');b.type='button';b.className='nav-btn';b.dataset.courseEnrollment='1';b.innerHTML='<span>▤</span><span class="nav-label">Course Enrollment</span><span class="enrollment-tab-badge">REG</span>';b.addEventListener('click',openEnrollment);nav.appendChild(b);
+  function renderMaterials(root){
+    const all=allCourses(); const e=set(ENROLLED),s=set(STARTED);
+    const tracks=['All',...new Set(all.map(c=>c.track).filter(Boolean))].sort((a,b)=>a==='All'?-1:b==='All'?1:a.localeCompare(b));
+    const kinds=['All','My Library / Courses','University Core','Elective Catalog','Civil Expansion','Academic Electives'];
+    const q=query.toLowerCase();
+    const list=all.filter(c=>(track==='All'||c.track===track)&&(kind==='All'||c.catalogCategory===kind)&&(`${c.courseId} ${c.title} ${c.track} ${c.provider} ${c.catalogCategory}`.toLowerCase().includes(q)));
+    root.innerHTML=`<div class="gate-note"><strong>Full material catalog:</strong> this view includes your library/course collection, the university core, civil expansion, and the complete elective subject bank. Prerequisite gates apply wherever prerequisites are defined in the academic map.</div><div class="library-tools"><input id="enroll-search" value="${esc(query)}" placeholder="Search every course / material…"><select id="enroll-track">${tracks.map(x=>`<option ${x===track?'selected':''}>${esc(x)}</option>`).join('')}</select><select id="enroll-kind">${kinds.map(x=>`<option ${x===kind?'selected':''}>${esc(x)}</option>`).join('')}</select></div><div class="material-list">${list.length?list.map(c=>{const [cls,label]=statusFor(c,e,s);return `<article class="material-item"><div><div class="material-meta">${esc(c.catalogCategory)} · ${esc(c.track||'Engineering')} · ${esc(c.courseId)}</div><h4>${esc(c.title)}</h4>${cls==='locked'?prereqMarkup(c):''}</div><div class="status ${cls}">${label}</div><div class="material-actions">${actionMarkup(c,e,s)} </div></article>`}).join(''):'<div class="empty-enrollment">No materials match this filter.</div>'}</div>`;
+    root.querySelector('#enroll-search')?.addEventListener('input',ev=>{query=ev.target.value;renderMaterials(root)});
+    root.querySelector('#enroll-track')?.addEventListener('change',ev=>{track=ev.target.value;renderMaterials(root)});
+    root.querySelector('#enroll-kind')?.addEventListener('change',ev=>{kind=ev.target.value;renderMaterials(root)});
   }
 
-  function cardActions(){
+  function renderMy(root){
+    const all=allCourses(),e=set(ENROLLED),s=set(STARTED);const list=[...e].map(id=>all.find(c=>String(c.id)===id)).filter(Boolean);
+    root.innerHTML=`<div class="gate-note"><strong>My Enrollment:</strong> this is your personal registration list. Starting a course does not bypass prerequisites; a started course must already have passed the same enrollment gate.</div><div class="enrollment-summary"><div class="enrollment-metric"><div class="n">${list.length}</div><div class="l">Enrolled</div></div><div class="enrollment-metric"><div class="n">${list.filter(c=>s.has(String(c.id))).length}</div><div class="l">Started</div></div><div class="enrollment-metric"><div class="n">${list.filter(c=>complete(c.id)).length}</div><div class="l">Completed</div></div><div class="enrollment-metric"><div class="n">${list.filter(c=>missing(c).length).length}</div><div class="l">Now locked</div></div><div class="enrollment-metric"><div class="n">${list.reduce((n,c)=>n+(Number(c.credits)||0),0)}</div><div class="l">Credits enrolled</div></div></div><div class="my-enrolled">${list.length?list.map(c=>{const [cls,label]=statusFor(c,e,s);return `<article class="material-item"><div><div class="material-meta">${esc(c.catalogCategory)} · ${esc(c.courseId)}</div><h4>${esc(c.title)}</h4></div><div class="status ${cls}">${label}</div><div class="material-actions">${actionMarkup(c,e,s)}</div></article>`}).join(''):'<div class="empty-enrollment">You have not enrolled in any course yet. Start from Degree Plan or All Materials.</div>'}</div>`;
+  }
+
+  function render(){
+    const content=document.querySelector('#enrollment-center-content'); if(!content)return;
+    const e=set(ENROLLED),s=set(STARTED),all=allCourses();
+    if(activeTab==='plan')renderPlan(content); else if(activeTab==='materials')renderMaterials(content); else renderMy(content);
+    document.querySelectorAll('#enrollment-modal [data-enroll]').forEach(b=>b.onclick=()=>{const r=enroll(b.dataset.enroll);if(r.ok)render()});
+    document.querySelectorAll('#enrollment-modal [data-start]').forEach(b=>b.onclick=()=>{const r=start(b.dataset.start);if(r.ok)render()});
+    document.querySelectorAll('#enrollment-modal [data-open-prereq]').forEach(b=>b.onclick=()=>{openPrereq(b.dataset.openPrereq)});
+  }
+  function openPrereq(id){
+    activeTab='materials';query='';track='All';kind='All';render();
+    setTimeout(()=>{const target=document.querySelector(`#enrollment-modal [data-enroll="${CSS.escape(String(id))}"]`)||document.querySelector(`#enrollment-modal [data-start="${CSS.escape(String(id))}"]`);target?.scrollIntoView({behavior:'smooth',block:'center'});},50);
+  }
+
+  function open(){
+    css();document.getElementById('enrollment-modal')?.remove();
+    const modal=document.createElement('div');modal.className='enrollment-modal';modal.id='enrollment-modal';
+    modal.innerHTML=`<div class="enrollment-panel"><header class="enrollment-header"><div><div class="eyebrow">PERSONAL UNIVERSITY · REGISTRATION CENTER</div><h2>Course Enrollment</h2><div class="muted-small">Register only when the academic structure says you are ready. The full material catalog is available separately so nothing is hidden or lost.</div></div><button type="button" class="enrollment-close" id="enrollment-close">×</button></header><nav class="enrollment-tabs"><button type="button" class="enrollment-tab ${activeTab==='plan'?'active':''}" data-etab="plan">Degree Plan</button><button type="button" class="enrollment-tab ${activeTab==='materials'?'active':''}" data-etab="materials">All Materials</button><button type="button" class="enrollment-tab ${activeTab==='mine'?'active':''}" data-etab="mine">My Enrollment <span class="enrollment-tab-badge">${set(ENROLLED).size}</span></button></nav><main class="enrollment-content" id="enrollment-center-content"></main></div>`;
+    document.body.appendChild(modal);
+    modal.querySelector('#enrollment-close').onclick=()=>modal.remove();
+    modal.querySelectorAll('[data-etab]').forEach(b=>b.onclick=()=>{activeTab=b.dataset.etab;open()});
+    render();
+  }
+
+  function injectNav(){
+    const nav=document.querySelector('.sidebar .nav'); if(!nav||nav.querySelector('[data-course-enrollment]'))return;
+    const b=document.createElement('button');b.type='button';b.className='nav-btn';b.dataset.courseEnrollment='1';b.innerHTML='<span>▤</span><span class="nav-label">Course Enrollment</span><span class="enrollment-tab-badge">REG</span>';b.onclick=open;nav.appendChild(b);
+  }
+  function injectCourseShortcuts(){
     document.querySelectorAll('.course-card[data-course]').forEach(card=>{
-      if(card.querySelector('.inline-enroll'))return;const id=String(card.dataset.course);const c=find(id);if(!c)return;const footer=card.querySelector('.course-bottom');if(!footer)return;
-      const m=missing(c),en=isEnrolled(id),st=isStarted(id);const b=document.createElement('button');b.type='button';b.className='ghost inline-enroll'+(m.length?' locked':'');b.textContent=m.length?'🔒 Prerequisites':st?'✓ Started':en?'▶ Start':'＋ Enroll';
-      b.addEventListener('click',ev=>{ev.stopPropagation();if(m.length){openEnrollment();return;}const r=en?start(id):enroll(id);if(r.ok){toast(en?'Course started':'Course enrolled');cardActions();}});footer.insertBefore(b,footer.firstChild);
+      if(card.querySelector('.enrollment-shortcut'))return;
+      const id=String(card.dataset.course),c=byId(id);if(!c)return;
+      const footer=card.querySelector('.course-bottom');if(!footer)return;
+      const b=document.createElement('button');b.type='button';b.className='ghost enrollment-shortcut';
+      b.textContent=missing(c).length?'🔒 Prerequisites':started(id)?'✓ Started':enrolled(id)?'▶ Start':'＋ Enroll';
+      b.onclick=e=>{e.stopPropagation();open()};footer.insertBefore(b,footer.firstChild);
     });
   }
-
-  function detailGate(){
-    const detail=document.querySelector('.catalog-detail-card');if(!detail)return;const h=detail.querySelector('h2');if(!h)return;const c=courses().find(x=>String(x.title||'').trim()===h.textContent.trim());if(!c)return;
-    const id=String(c.id||c.courseId);const m=missing(c);let panel=detail.querySelector('.course-enrollment-panel');
-    if(!panel){panel=document.createElement('section');panel.className='course-enrollment-panel';detail.insertBefore(panel,detail.querySelector('.catalog-progress')||detail.firstElementChild?.nextSibling||null);}
-    const en=isEnrolled(id),st=isStarted(id);
-    panel.innerHTML=`<div><div class="eyebrow">REGISTRATION STATUS</div><strong>${st?'Started':en?'Enrolled':m.length?'Locked':'Ready to enroll'}</strong><div class="sub">${m.length?`Prerequisites required before enrollment. ${m.map(title).join(' · ')}`:'Use Add Course to put it in your personal registration list.'}</div>${m.length?`<div class="course-lock prereq-list">${m.map(pid=>`<button type="button" class="prereq-chip" data-detail-prereq="${esc(pid)}">${esc(title(pid))}</button>`).join('')}</div>`:''}</div><div class="enroll-actions">${m.length?'<span class="enroll-btn locked">🔒 Locked</span>':!en?`<button type="button" class="enroll-btn primary" data-detail-enroll="${esc(id)}">＋ Add Course</button>`:`<span class="enroll-btn done">✓ Added</span>`}${!m.length&&!st?`<button type="button" class="enroll-btn start" data-detail-start="${esc(id)}">▶ Start Course</button>`:st?'<span class="enroll-btn done">✓ Started</span>':''}</div>`;
-    // Never expose a completion shortcut for a course whose prerequisites are not complete.
-    if(m.length)document.getElementById('catalog-complete')?.remove();
-    panel.querySelector('[data-detail-enroll]')?.addEventListener('click',()=>{const r=enroll(id);if(r.ok){toast('Course enrolled');detailGate();}});
-    panel.querySelector('[data-detail-start]')?.addEventListener('click',()=>{const r=start(id);if(r.ok){toast('Course started');detailGate();}});
-    panel.querySelectorAll('[data-detail-prereq]').forEach(x=>x.addEventListener('click',()=>openCourse(x.dataset.detailPrereq)));
-  }
-
-  function refresh(){injectTab();cardActions();detailGate();}
-  css();
-  const app=document.getElementById('app');
-  if(app){let scheduled=false;const observer=new MutationObserver(()=>{if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;refresh();});});observer.observe(app,{childList:true,subtree:true});}
-  window.addEventListener('enrollment-changed',refresh);window.addEventListener('course-started',refresh);window.addEventListener('course-stopped',refresh);refresh();
-  window.CAMPUS_ENROLLMENT={courses,enrolled:()=>setOf(ENROLLED_KEY),started:()=>setOf(STARTED_KEY),find,prereqs,missing,complete,enroll,start,openEnrollment};
+  injectNav();injectCourseShortcuts();
+  setInterval(()=>{injectNav();injectCourseShortcuts();},900);
+  window.addEventListener('enrollment-changed',()=>{injectNav();injectCourseShortcuts()});
+  window.addEventListener('course-started',()=>{injectNav();injectCourseShortcuts()});
 })();
