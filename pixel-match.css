@@ -1,0 +1,33 @@
+/* Engineering Online Campus — reference layout match.
+   Geometry and visual rhythm tuned to the supplied 1024x1536 reference. */
+:root{--pm-bg:#040812;--pm-panel:#07101c;--pm-panel2:#091423;--pm-line:rgba(151,190,224,.14);--pm-cyan:#51d7ff;--pm-blue:#2f86ff;--pm-purple:#7d5cff;--pm-text:#eef5ff;--pm-muted:#8ea3b8}
+html,body{margin:0;background:var(--pm-bg);overflow-x:hidden}
+body{min-width:320px}
+.eoc{width:100%;max-width:1600px;margin:0 auto;padding:8px;grid-template-columns:180px minmax(0,1fr);gap:8px;background:radial-gradient(900px 420px at 48% -5%,rgba(37,91,158,.25),transparent 64%),#040812}
+.eoc-side{border-radius:16px;padding:10px;min-height:calc(100vh - 16px);background:linear-gradient(180deg,#07111d,#040912);border-color:var(--pm-line)}
+.eoc-logo{font-size:.8rem;line-height:1.12;padding:10px 7px 14px;letter-spacing:.08em}
+.eoc-nav{gap:3px;margin-top:10px}.eoc-nav button{font-size:.72rem;line-height:1.15;padding:9px 10px;border-radius:8px;white-space:normal}
+.eoc-user{bottom:10px;left:10px;right:10px;padding:9px;border-radius:11px}
+.eoc-main{min-width:0}.eoc-top{height:43px;padding:0 9px;font-size:.63rem}
+.eoc-layout{grid-template-columns:minmax(0,1fr) 226px;gap:8px}
+.eoc-hero{min-height:300px;border-radius:16px;background:#071323}
+.eoc-hero-art{width:62%;right:0}
+.eoc-hero-copy{padding:25px 23px;max-width:53%}
+.eoc-hero h1{font-size:clamp(2.4rem,4vw,4rem);margin:8px 0 10px}
+.eoc-hero p{font-size:.72rem;line-height:1.43;max-width:360px}.jp{font-size:.67rem;margin-top:12px}.cta{font-size:.62rem;padding:8px 11px;margin-top:12px}
+.eoc-stats{gap:6px;margin:7px 0}.e-stat{padding:9px;border-radius:10px}.e-stat .n{font-size:1.08rem}.e-stat .l{font-size:.5rem}
+.eoc-section{margin-top:7px;padding:11px;border-radius:14px}.eoc-section-head{margin-bottom:8px}.eoc-section-head h2{font-size:.74rem}.ey{font-size:.5rem}
+.eoc-cards{gap:6px}.e-card{border-radius:10px}.e-card-art{height:165px}.e-card-body{padding:8px}.e-card-body h3{font-size:.62rem;line-height:1.15}.meta{font-size:.49rem}.e-bar{height:3px;margin-top:6px}
+.e-side{gap:7px}.e-box{padding:9px;border-radius:11px}.e-box h3{font-size:.64rem;margin-bottom:7px}
+.eoc-section .character-strip{gap:6px}.eoc-section .char svg{height:180px}.eoc-section .char span{font-size:.48rem;left:6px;bottom:6px;padding:4px 5px}
+/* enrollment table: compact rows like reference */
+.enroll-tabs{gap:4px;margin-bottom:7px}.enroll-tabs button{font-size:.5rem;padding:6px 8px;border-radius:7px}
+.sem{margin-top:6px;border-radius:9px}.sem-head{font-size:.58rem;padding:8px 9px}
+.course{grid-template-columns:minmax(0,1fr) auto auto;gap:6px;padding:8px 9px}.course strong{font-size:.53rem}.course small{font-size:.46rem}.course button{font-size:.48rem;padding:5px 7px;border-radius:6px}
+.sidecol .crew-row{grid-template-columns:34px 1fr auto;gap:6px;padding-top:6px}.crew-art{width:34px;height:42px;border-radius:7px}.crew-row strong{font-size:.54rem}.crew-row small{font-size:.46rem}.quote{font-size:.6rem;line-height:1.38}
+/* target-like rail cards */
+.eoc-side:after{content:"";display:block;position:absolute;left:10px;right:10px;bottom:9px;height:1px;background:rgba(110,180,255,.08);pointer-events:none}
+@media(min-width:1300px){.eoc{grid-template-columns:210px minmax(0,1fr)}.eoc-layout{grid-template-columns:minmax(0,1fr) 300px}.eoc-hero{min-height:360px}.e-card-art{height:190px}}
+@media(max-width:1000px){.eoc{grid-template-columns:170px minmax(0,1fr)}.eoc-layout{grid-template-columns:minmax(0,1fr) 210px}.eoc-cards{grid-template-columns:repeat(4,minmax(120px,1fr));overflow-x:auto}.eoc-cards .e-card{min-width:120px}}
+@media(max-width:760px){.eoc{display:block;padding:6px}.eoc-side{position:relative;min-height:auto;margin-bottom:6px}.eoc-user{display:none}.eoc-nav{grid-template-columns:repeat(2,1fr);display:grid}.eoc-layout{display:block}.e-side{grid-template-columns:1fr 1fr;display:grid;margin-top:7px}.eoc-hero-copy{max-width:61%}.eoc-cards{grid-template-columns:repeat(2,minmax(150px,1fr));overflow:visible}.eoc-stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.eoc-top{height:38px}.eoc-hero{min-height:410px}.eoc-hero-art{width:72%;opacity:.78}.eoc-hero-copy{max-width:95%;padding:18px}.eoc-hero h1{font-size:2.45rem}.e-side{grid-template-columns:1fr}.eoc-cards{grid-template-columns:1fr 1fr}.course{grid-template-columns:1fr}.course>div:nth-child(2),.course>div:nth-child(3){justify-self:start}}
